@@ -1,0 +1,5 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/changelog-cultures-table.yaml
+  - include:
+      file: db/changelog/changelog-culture-objects-table.yaml

@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2
+      author: user
+      changes:
+        - sql: |
+            CREATE TABLE culture_objects (
+              id bigint PRIMARY KEY,
+              name VARCHAR(100) NOT NULL,
+              sensor_id INT NOT NULL,
+              valve_id VARCHAR(20) NOT NULL,
+              zone VARCHAR(50) NOT NULL,
+              culture_id bigint NOT NULL,
+              CONSTRAINT fk_culture FOREIGN KEY (culture_id) REFERENCES cultures(id) ON DELETE CASCADE
+            );
+
+        - sql: |
+            INSERT INTO culture_objects (id, name, sensor_id, valve_id, zone, culture_id) VALUES
+              (1, 'виноград синий', 1, 'v1', 'сад', 1),
+              (2, 'виноград красный', 2, 'v2', 'сад', 1),
+              (3, 'яблоня белая', 3, 'v3', 'сад', 2),
+              (4, 'смородина чёрная', 4, 'v4', 'огород', 3);

@@ -1,0 +1,28 @@
+databaseChangeLog:
+    - changeSet:
+          id: 1
+          author: user
+          changes:
+              - sql: |
+                    CREATE TABLE sensors (
+                      id SERIAL PRIMARY KEY,
+                      name VARCHAR(100) NOT NULL,
+                      description TEXT,
+                      zone VARCHAR(50) NOT NULL,
+                      controller_id INT NOT NULL,
+                      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                      humidity INT NOT NULL
+                    );
+                    
+                    CREATE INDEX idx_name ON sensors (name);
+                    CREATE INDEX idx_zone ON sensors (zone);
+                    CREATE INDEX idx_controller_id ON sensors (controller_id);
+                    CREATE INDEX idx_created_at_sensors ON sensors (created_at);
+                    
+                    INSERT INTO sensors (name, description, zone, controller_id,humidity)
+                    VALUES 
+                      ('sensor1', 'vlaga1', 'Greenhouse', 1, 3500),
+                      ('sensor2', 'vlaga2', 'Greenhouse', 2, 3500),  
+                      ('Temperature Sensor', 'Measures ambient temperature', 'Greenhouse', 1,2),
+                      ('Humidity Sensor', 'Measures soil humidity', 'Field 3', 2,3),
+                      ('Light Sensor', 'Measures light intensity', 'Greenhouse', 1,4);

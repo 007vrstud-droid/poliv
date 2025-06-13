@@ -1,0 +1,56 @@
+server:
+  port: 8080
+  tomcat:
+    accesslog:
+      enabled: true
+      pattern: '%h %l %u %t "%r" %s %b "%{Referer}i" "%{User-Agent}i"'  # Это формат логирования запросов
+    uri-encoding: UTF-8  # Настройка кодировки для URI запросов
+
+spring:
+  application:
+    name: Poliv
+
+  main:
+    banner-mode: off
+
+
+logging:
+  level:
+    com.example: TRACE
+    org.springframework.http.converter.json: TRACE
+    com.fasterxml.jackson.databind: TRACE
+    com.fasterxml.jackson.core: TRACE
+#    org.hibernate.SQL: DEBUG                      # Показывает сами SQL-запросы
+#    org.hibernate.type.descriptor.sql.BasicBinder: TRACE  # Показывает значения параметров запросов
+#    org.springframework.scheduling: DEBUG         # Планировщик задач (если используешь @Scheduled)
+    org.springframework.web.client: DEBUG
+    org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
+    # Уровень для Tomcat HTTP parser — поднимаем до ERROR, чтобы не показывать parsing warnings
+    org.apache.coyote.http11.Http11Processor: ERROR
+    org.apache.coyote.http11.Http11InputBuffer: ERROR
+    org.apache.catalina.core: ERROR
+
+
+watering:
+  enabled: true                            # Включает или отключает систему полива и ручную и автоматическую
+  prognoz-check-enabled:  false            # Включить ли проверку погоды перед поливом
+  sensors-check-enabled:  false            # Проверять ли влажность почвы перед поливом
+  schedule-check-enabled: false             # Включен ли полив по расписанию
+  sensors-check-interval-seconds: 60       # Интервал между проверками влажности почвы
+  schedule-cron: "0 0 6 * * *"                        # CRON-выражение для расписания полива
+  manual-watering:
+    enabled: false
+    time: "17:46"
+    duration-minutes: 1
+    valves:
+      - "v1"
+      - "v2"
+      - "v3"
+      - "v4"
+      - "v5"
+  modules:
+    prognoz-url: http://localhost:8081/weather/will-it-rain
+    schedule-url: http://localhost:8082/api/schedule/today
+    sensors-url: http://localhost:8083/sensor-stats/dry-sensors
+    arduino-url: http://192.168.1.10:80
+    moisture-url: http://localhost:8083

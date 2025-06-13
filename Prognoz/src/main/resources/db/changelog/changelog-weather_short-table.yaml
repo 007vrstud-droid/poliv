@@ -1,0 +1,11 @@
+databaseChangeLog:
+    - changeSet:
+          id: create-weather-short
+          author: user
+          changes:
+              - sql:
+                    sql: |
+                        CREATE TABLE weather_short (
+                          dt_txt TEXT PRIMARY KEY,
+                          will_rain BOOLEAN NOT NULL
+                        );

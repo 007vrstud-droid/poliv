@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2
+      author: user
+      changes:
+        - sql: |
+            CREATE TABLE data_sensors (
+              id SERIAL PRIMARY KEY,
+              sensor_id INT NOT NULL,
+              sensor_value NUMERIC(10, 2) NOT NULL,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              CONSTRAINT fk_sensor FOREIGN KEY (sensor_id) REFERENCES sensors(id)
+                ON DELETE CASCADE
+            );
+
+            CREATE INDEX idx_sensor_id ON data_sensors (sensor_id);
+            CREATE INDEX idx_created_at_data_sensors ON data_sensors (created_at);
+            CREATE INDEX idx_sensor_id_created_at ON data_sensors (sensor_id, created_at);
