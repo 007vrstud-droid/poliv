@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Управление Поливом</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .container {
+      display: flex;
+      gap: 20px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .section {
+      flex: 1;
+      min-width: 300px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px #ccc;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+
+    input, select, button {
+      margin-top: 5px;
+      padding: 5px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 15px;
+      cursor: pointer;
+    }
+
+    button.active {
+      background-color: #4caf50;
+      color: white;
+      font-weight: bold;
+      border: none;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-weight: bold;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Система Полива</h1>
+
+  <div class="container">
+
+    <!-- Ручной полив -->
+    <div class="section">
+      <h2>Ручной Полив</h2>
+
+      <label>
+        Время начала:
+        <input type="time" id="manual-time" value="06:00">
+      </label>
+
+      <label>
+        Длительность (мин):
+        <input type="number" id="manual-duration" value="10" min="1">
+      </label>
+
+      <label>
+        Клапаны (через запятую):
+        <input type="text" id="manual-valves" value="1,2">
+      </label>
+
+      <button onclick="submitManual(true)">Включить Ручной Полив</button>
+      <button onclick="submitManual(false)">Выключить Ручной Полив</button>
+    </div>
+
+    <!-- Автоматический полив -->
+    <div class="section">
+      <h2>Автоматический Полив</h2>
+
+      <label>
+        Расписание (CRON):
+        <input type="text" id="auto-cron" value="0 0 6 * * *">
+      </label>
+
+      <label>
+        Интервал сенсоров (сек):
+        <input type="number" id="auto-interval" value="60" min="10">
+      </label>
+
+      <label>
+        Проверять прогноз погоды:
+        <select id="auto-prognoz">
+          <option value="true">Да</option>
+          <option value="false">Нет</option>
+        </select>
+      </label>
+
+      <label>
+        Проверять сенсоры:
+        <select id="auto-sensors">
+          <option value="true">Да</option>
+          <option value="false">Нет</option>
+        </select>
+      </label>
+
+      <label>
+        Учитывать расписание:
+        <select id="auto-schedule">
+          <option value="true">Да</option>
+          <option value="false">Нет</option>
+        </select>
+      </label>
+
+      <button onclick="submitAuto(true)">Включить Автоматический Полив</button>
+      <button onclick="submitAuto(false)">Выключить Автоматический Полив</button>
+    </div>
+
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:8080/watering';
+
+    function submitManual(enabled) {
+      const time = document.getElementById('manual-time').value;
+      const duration = parseInt(document.getElementById('manual-duration').value);
+      const valves = document.getElementById('manual-valves').value
+                      .split(',').map(v => v.trim()).filter(v => v);
+
+      fetch(`${API_BASE}/manual`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          enabled: enabled,
+          time: time,
+          durationMinutes: duration,
+          valves: valves
+        })
+      })
+      .then(() => loadInitialState())
+      .catch(err => console.error('Ошибка ручного полива:', err));
+    }
+
+    function submitAuto(enabled) {
+      const cron = document.getElementById('auto-cron').value;
+      const interval = parseInt(document.getElementById('auto-interval').value);
+      const prognoz = document.getElementById('auto-prognoz').value === 'true';
+      const sensors = document.getElementById('auto-sensors').value === 'true';
+      const schedule = document.getElementById('auto-schedule').value === 'true';
+
+      fetch(`${API_BASE}/auto`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          enabled: enabled,
+          scheduleCheckEnabled: schedule,
+          prognozCheckEnabled: prognoz,
+          sensorsCheckEnabled: sensors,
+          sensorsCheckIntervalSeconds: interval,
+          scheduleCron: cron
+        })
+      })
+      .then(() => loadInitialState())
+      .catch(err => console.error('Ошибка авто полива:', err));
+    }
+
+    function highlightButtons(type, enabled) {
+      const manualOn = document.querySelector('button[onclick="submitManual(true)"]');
+      const manualOff = document.querySelector('button[onclick="submitManual(false)"]');
+      const autoOn = document.querySelector('button[onclick="submitAuto(true)"]');
+      const autoOff = document.querySelector('button[onclick="submitAuto(false)"]');
+
+      [manualOn, manualOff, autoOn, autoOff].forEach(btn => btn.classList.remove('active'));
+
+      if (type === 'manual' && enabled) {
+        manualOn.classList.add('active');
+        autoOff.classList.add('active');
+      } else if (type === 'manual' && !enabled) {
+        manualOff.classList.add('active');
+      }
+
+      if (type === 'auto' && enabled) {
+        autoOn.classList.add('active');
+        manualOff.classList.add('active');
+      } else if (type === 'auto' && !enabled) {
+        autoOff.classList.add('active');
+      }
+    }
+
+    function loadInitialState() {
+      fetch(`${API_BASE}/manual`)
+        .then(res => res.json())
+        .then(data => {
+          // Поля
+          document.getElementById('manual-time').value = data.time || "06:00";
+          document.getElementById('manual-duration').value = data.durationMinutes || 10;
+          document.getElementById('manual-valves').value = (data.valves || []).join(', ');
+          // Подсветка
+          highlightButtons('manual', data.enabled);
+        })
+        .catch(err => console.error('Ошибка при получении ручного режима:', err));
+
+      fetch(`${API_BASE}/auto`)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('auto-cron').value = data.scheduleCron || "";
+          document.getElementById('auto-interval').value = data.sensorsCheckIntervalSeconds || 60;
+          document.getElementById('auto-prognoz').value = String(data.prognozCheckEnabled);
+          document.getElementById('auto-sensors').value = String(data.sensorsCheckEnabled);
+          document.getElementById('auto-schedule').value = String(data.scheduleCheckEnabled);
+          highlightButtons('auto', data.enabled);
+        })
+        .catch(err => console.error('Ошибка при получении авто режима:', err));
+    }
+
+    window.addEventListener('DOMContentLoaded', loadInitialState);
+  </script>
+
+</body>
+</html>
